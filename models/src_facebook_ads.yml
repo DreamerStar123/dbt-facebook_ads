@@ -1,0 +1,187 @@
+version: 2
+
+sources:
+  - name: facebook_ads # This source will only be used if you are using a single facebook_ads source connector. If multiple sources are being unioned, their tables will be directly referenced via adapter.get_relation.
+    schema: "{{ var('facebook_ads_schema', 'facebook_ads') }}"
+    database: "{% if target.type != 'spark' %}{{ var('facebook_ads_database', target.database) }}{% endif %}"
+    
+    loader: Fivetran
+    loaded_at_field: _fivetran_synced
+    
+    freshness: 
+      warn_after: {count: 48, period: hour}
+      error_after: {count: 168, period: hour}
+
+    config:
+      enabled: "{{ var('ad_reporting__facebook_ads_enabled', true) }}"
+      
+    tables:
+      - name: account_history
+        description: Each record in this table reflects a version of a Facebook ad account.
+        identifier: "{{ var('facebook_ads_account_history_identifier', 'account_history') }}"
+        columns:
+          - name: id
+            description: The ID of the ad account.
+          - name: name
+            description: Name of the account.
+          - name: _fivetran_synced
+            description: "{{ doc('_fivetran_synced') }}"
+          - name: account_status
+            description: Current status of account.
+          - name: business_country_code
+            description: Country code of business associated to account.
+          - name: created_time
+            description: The time account was created.
+          - name: currency
+            description: Currency associated with account.
+          - name: timezone_name
+            description: Timezone associated with account.
+
+      - name: ad_history
+        description: Each record in this table reflects a version of a Facebook ad.
+        identifier: "{{ var('facebook_ads_ad_history_identifier', 'ad_history') }}"
+        columns:
+          - name: id
+            description: The ID of this ad.
+          - name: account_id
+            description: The ID of the ad account that this ad belongs to.
+          - name: ad_set_id
+            description: ID of the ad set that contains the ad.
+          - name: campaign_id
+            description: Ad campaign that contains this ad.
+          - name: creative_id
+            description: The ID of the ad creative to be used by this ad.
+          - name: name
+            description: Name of the ad.
+          - name: _fivetran_synced
+            description: "{{ doc('_fivetran_synced') }}"
+          - name: updated_time
+            description: "{{ doc('updated_time') }}"
+
+      - name: ad_set_history
+        description: Each record in this table reflects a version of a Facebook ad set.
+        identifier: "{{ var('facebook_ads_ad_set_history_identifier', 'ad_set_history') }}"
+        columns:
+          - name: id
+            description: The ID of the ad set.
+          - name: account_id
+            description: The ID of the ad account that this ad set belongs to.
+          - name: campaign_id
+            description: Ad campaign that contains this ad set.
+          - name: name
+            description: The name of the ad set.
+          - name: _fivetran_synced
+            description: "{{ doc('_fivetran_synced') }}"
+          - name: updated_time
+            description: "{{ doc('updated_time') }}"
+          - name: start_time
+            description: Timestamp of designated ad set start time.
+          - name: end_time
+            description: Timestamp of designated ad set end time.
+          - name: bid_strategy
+            description: Bid strategy values are - 'LOWEST_COST_WITHOUT_CAP', 'LOWEST_COST_WITH_BID_CAP', 'COST_CAP', 'LOWEST_COST_WITH_MIN_ROAS'.
+          - name: daily_budget
+            description: Daily budget of ad set.
+          - name: budget_remaining
+            description: Remaining budget of ad set.
+          - name: status
+            description: Status values are - 'ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED'.
+
+      - name: basic_ad
+        description: Each record represents the daily performance of an ad in Facebook.
+        identifier: "{{ var('facebook_ads_basic_ad_identifier', 'basic_ad') }}"
+        columns:
+          - name: ad_id
+            description: The ID of the ad the report relates to.
+          - name: ad_name
+            description: Name of the ad the report relates to.
+          - name: adset_name
+            description: Name of the ad set the report relates to.
+          - name: date
+            description: The date of the reported performance.
+          - name: account_id
+            description: The ID of the ad account that this ad belongs to.
+          - name: impressions
+            description: The number of impressions the ad had on the given day.
+          - name: inline_link_clicks
+            description: The number of clicks the ad had on the given day.
+          - name: spend
+            description: The spend on the ad in the given day.
+          - name: reach
+            description: The number of people who saw any content from your Page or about your Page. This metric is estimated.
+          - name: frequency
+            description: The average number of times each person saw your ad; it is calculated as impressions divided by reach.
+          - name: _fivetran_synced
+            description: "{{ doc('_fivetran_synced') }}"
+
+      - name: campaign_history
+        description: Each record in this table reflects a version of a Facebook campaign.
+        identifier: "{{ var('facebook_ads_campaign_history_identifier', 'campaign_history') }}"
+        columns:
+          - name: id
+            description: The ID of the campaign.
+          - name: account_id
+            description: The ID of the ad account that this campaign belongs to.
+          - name: name
+            description: The name of the campaign.
+          - name: _fivetran_synced
+            description: "{{ doc('_fivetran_synced') }}"
+          - name: updated_time
+            description: "{{ doc('updated_time') }}"
+          - name: created_time
+            description: The time the campaign was created.
+          - name: start_time
+            description: Timestamp of designated campaign start time.
+          - name: stop_time
+            description: Timestamp of designated campaign end time.
+          - name: daily_budget
+            description: Daily budget of campaign.
+          - name: budget_remaining
+            description: Remaining budget of campaign.
+          - name: lifetime_budget
+            description: Lifetime budget of the campaign.
+          - name: status
+            description: Status values are - 'ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED'.
+
+      - name: creative_history
+        description: Each record in this table reflects a version of a Facebook creative.
+        identifier: "{{ var('facebook_ads_creative_history_identifier', 'creative_history') }}"
+        columns:
+          - name: _fivetran_id
+            description: Unique record identifier
+          - name: page_link
+            description: URL destination of Facebook ads.
+          - name: template_page_link
+            description: URL destination of Facebook dynamic ads.
+          - name: id
+            description: Unique ID for an ad creative.
+          - name: account_id
+            description: Ad account ID for the account this ad creative belongs to.
+          - name: name
+            description: Name of this ad creative as seen in the ad account's library.
+          - name: url_tags        
+            description: A set of query string parameters which will replace or be appended to urls clicked from page post ads, message of the post, and canvas app install creatives only.
+          - name: _fivetran_synced
+            description: "{{ doc('_fivetran_synced') }}"
+          - name: template_page_link
+            description: URL destination of Facebook dynamic ads.
+          - name: asset_feed_spec_link_urls
+            description: Link to the asset feed spec
+          - name: object_story_link_data_child_attachments
+            description: Link of the object story child attachments
+          - name: object_story_link_data_caption
+            description: Link of the object story caption
+          - name: object_story_link_data_description
+            description: Link of the object story description
+          - name: object_story_link_data_link
+            description: Link of the object story link
+          - name: object_story_link_data_message
+            description: Link of the object story message
+          - name: template_app_link_spec_ios
+            description: Link of the object story spec for ios
+          - name: template_app_link_spec_ipad
+            description: Link of the template app spec for ipad
+          - name: template_app_link_spec_android
+            description: Link of the template app for android
+          - name: template_app_link_spec_iphone
+            description: Link of the template app for iphone
